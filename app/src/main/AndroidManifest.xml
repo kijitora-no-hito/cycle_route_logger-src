@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- 記録はフォアグラウンドサービス（type=location）。前面で始めるので「使用中のみ」の許可で裏でも記録できる。 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 任意（設定画面から案内するだけ。求めなくても記録できる）:
+         「常に許可」なら、アプリが落とされてシステムが記録サービスを再起動したときも記録を続けられる（記録中だけ使う）。 -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- 任意: 電池の最適化から外す確認を出す（長時間の記録が止められにくくなる）。 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- 走行中の写真（アプリ内カメラ。撮影ボタンを初めて押したときに求める）。QR の読み取りは Code Scanner なのでこれとは別。 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 9 以下でフォトライブラリ（Pictures/）に保存するため。10 以上は要らない。 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!-- 地図（Google マップ）のタイル取得と、利用者が指定した URL（QR を含む）からの GPX の取得。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".CycleApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CycleRouteLogger">
+
+        <!-- Maps SDK for Android のキー。Secrets Gradle Plugin が local.properties の
+             MAPS_API_KEY を埋め込む（未設定なら local.defaults.properties のプレースホルダ）。 -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- QR コードの読み取り（Google Code Scanner）の機能を、Play ストアからのインストール時に一緒に入れてもらう。
+             入っていなければ初めて使うときに ModuleInstallClient でダウンロードする。 -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- 他のアプリからの「開く」: GPX の MIME -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/gpx" />
+            </intent-filter>
+            <!-- 「開く」: MIME が分からない（octet-stream など）が拡張子が .gpx -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\..*\\.gpx" />
+                <data android:pathPattern=".*\\.GPX" />
+            </intent-filter>
+
+            <!-- 共有で受け取る -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/gpx" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".record.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+
+</manifest>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#FF00695C</color>
+    <color name="brand_primary_dark">#FF4DB6AC</color>
+    <color name="brand_accent">#FFFF8F00</color>
+    <color name="brand_container">#FFB2DFDB</color>
+    <color name="brand_on_container">#FF00251F</color>
+    <color name="brand_container_dark">#FF004D40</color>
+    <color name="brand_on_container_dark">#FFB2DFDB</color>
+    <color name="brand_surface">#FFF7FBFA</color>
+    <!-- 記録中の軌跡・ボタン -->
+    <color name="track_line">#FFE53935</color>
+    <color name="recording">#FFD32F2F</color>
+    <!-- 目的地（破線・旗・矢印） -->
+    <color name="destination">#FFFF6D00</color>
+    <!-- ルートから外れたとき -->
+    <color name="off_route">#FFD50000</color>
+    <!-- アイコン -->
+    <color name="icon_background">#FF0E3B43</color>
+    <!-- 記録の詳細の区間の表（いちばん速い・遅い区間） -->
+    <color name="split_fast">#4043A047</color>
+    <color name="split_slow">#40E53935</color>
+    <!-- 場所名の検索で選んだ地点の印（0.6.0） -->
+    <color name="place_result">#FF6A1B9A</color>
+    <!-- 開拓したマス（半透明）と、期間・記録で初めて開拓したマス（0.8.0〜。drive_logger と同じ） -->
+    <color name="cell_explored">#552E7D32</color>
+    <color name="cell_new">#66FF6F00</color>
+    <!-- 生の GPS の点・精度の円（記録の詳細の比較表示。0.9.0） -->
+    <color name="raw_gps">#FFD81B60</color>
+</resources>

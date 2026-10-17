@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 30 以下の自動バックアップ。位置の記録は端末の外に出さない方針なので、DB は対象外（設定だけ）。 -->
+<full-backup-content>
+    <exclude domain="database" path="." />
+    <!-- 記録の一覧の絞り込みの条件（場所の範囲の中心を含む。0.11.0） -->
+    <exclude domain="sharedpref" path="track_filter.xml" />
+</full-backup-content>

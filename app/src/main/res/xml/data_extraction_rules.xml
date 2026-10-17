@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+。クラウドバックアップに位置の記録（DB）を含めない。端末間の移行は含める。 -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="." />
+        <!-- 記録の一覧の絞り込みの条件（場所の範囲の中心を含む。0.11.0） -->
+        <exclude domain="sharedpref" path="track_filter.xml" />
+    </cloud-backup>
+    <device-transfer />
+</data-extraction-rules>

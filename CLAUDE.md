@@ -7,7 +7,7 @@
 
 - アプリ名: 自転車ルートロガー
 - applicationId / namespace / パッケージ: `jp.kjtr.cycleroutelogger`（applicationId は公開後に変えられない）
-- minSdk 24 / targetSdk 36 / compileSdk 36、versionCode 16 / versionName "0.11.0"（0.1.0 は 2026-10-11 作成・GitHub 公開済み。利用者の端末に実データあり。
+- minSdk 24 / targetSdk 36 / compileSdk 36、versionCode 17 / versionName "0.12.0"（0.12.0 = 2026-11-07 オンラインランキング・未公開。0.1.0 は 2026-10-11 作成・GitHub 公開済み。利用者の端末に実データあり。
   0.7.0 まで公開済み。0.8.0（2026-10-13、開拓したマスの地図・PhotoLocator の修正）・0.9.0（2026-10-15、測位の方式・軌跡のなめらかさ・獲得標高）・
   0.10.0（2026-10-16、ファイルから記録を取り込む）・0.10.1（2026-10-16、Strava の書き出し・activities.csv・活動単位の重複）・0.10.2（2026-10-17、まとめの地図をタイルに・バックアップと取り込みの取り違えの案内）・0.11.0（2026-10-17、記録の一覧の絞り込み・並べ替え）は dist にある）
 - **記録の詳細**（0.5.0、DESIGN.md §4.5）: 地図はルートプランと同じ作り（`Settings.trackMapRatio`、全画面＋シート）。区間・分布は
@@ -25,6 +25,13 @@
   状態と保存は `data/TrackBrowser.kt`（SharedPreferences `track_filter` に JSON。**クラウドバックアップから除外**）。場所は **Room 版 7 の `track_geo`**（記録ごとの外接矩形・始点・終点・10 m で間引いた線。
   `data/TrackGeoIndex.kt` が起動時と記録の追加・変更時に無い・古い分だけバックグラウンドで作り、メモリにも持つ。**全点は持たない**）。絞り込んだまとめは `summary?filtered=true`（期間・フリー/ルートの切り替えは出さない・「初めて」の橙なし）。
   **場所の判定・索引の作り方を変えたら `TrackGeo.VERSION` を上げる**（古い行は作り直される）。
+- **オンラインランキング**（0.12.0、2026-11-07、DESIGN.md §4.12）: 正本は `d:\work\android\ranking_server\docs\API.md`（app id `cycle`・板 `distance`（m、画面は km）/ `cells`、総合と今月（日本時間））。
+  `ranking/`（`RankingSpec.kt` 以外）・`ui/RankingPane.kt`・`ui/RankingSettings.kt`・`ui/RankingScreen.kt` は **drive_logger と同じ形のコード**（直すときは両方）。基準点めぐり・神社めぐりの写しに記録中の保留（`hold`）・km 表示・マスの覚え（`RankingCellCache`）を足したもの。
+  参加は既定 OFF。**送るのは名前・ランダムな ID・`RankingSpec.compute` の数値・版・端末の種類だけ**（位置・経路・マスの場所は送らない）。値はまとめの計算そのもの（`RideSummaries`・`CellShapes`）。
+  記録中・取り込みの書き込み中は送らない。OFF でサーバから消す。接続先は release 固定 `BuildConfig.RANKING_BASE`、debug だけ設定で変更・平文 HTTP も debug だけ（`src/debug/res/xml/`）。
+  入口はホームの［ランキング］とまとめの右上。バックアップの manifest に参加の情報。SharedPreferences `ranking` はクラウドバックアップから除外。
+  板・値を変えるときは `RankingSpec.kt`・`RankingTest`・サーバの `src/apps.ts`・API.md §4 をそろえる。**マスの数え方を変えたら `SummaryRepository.CELLS_VERSION` を上げる**。
+  確認: PC でサーバ（ranking_server/CLAUDE.md。例 PORT=8795・一時 DB）→ debug の設定で接続先 `http://10.0.2.2:8795/rank/api/v1` → 参加・取り込み → `node scripts/dev/seed.mjs --db <DB> --n 15 --app cycle`。
 - **バックアップと取り込みの取り違え**（0.10.2、DESIGN.md §6.1）: `importer/FileKind`（zip の先頭から覗いて manifest.json → バックアップ、GPX/FIT/… や activities.csv → 記録のファイル）。
   設定の［バックアップを読み込む］は記録のファイルなら案内→同じ URI で `ActivityImporter.start`、取り込みでバックアップなら `State.LooksLikeBackup`。
 - **開拓したマスの地図**（0.8.0、DESIGN.md §4.8。drive_logger 0.4.0 の移植）: `stats/CellShapes.kt`（マス → 矩形・同じ行の隣り合うマスをまとめる・
@@ -48,7 +55,7 @@
   OpenStreetMap Foundation に送られる（プライバシーポリシーに記載済み）。エミュレータの確認で Nominatim に負荷をかけない（数回だけ）。- **ファイルから記録を取り込む**（0.10.0、DESIGN.md §4.10）: 記録の一覧の右上 → SAF で zip / GPX / FIT / TCX / KML / KMZ / .gz → `importer/`（`ActivityReader` が zip・.gz を順に読み、`FitParser`（自前。Garmin SDK は使わない）・`TcxParser`・`KmlParser`・`GpxParser` の点を `RunCollector` が一時ファイル `FileSpool` へ、`DayPlanner` が重複（FIT > TCX > GPX > KML、前後 30 秒）を除いて端末のタイムゾーンの日付ごとに分け、`ImportBuilder` が `RideTracker` に通して 1 日 = 1 記録（free、`track.importFormat`、点の provider = 4））。流れと状態は `ActivityImporter`（`CycleApp.activityImport`、アプリのスコープ）、画面は `ui/TrackImportScreen.kt`。**`RideTracker` の数え方を変えたら取り込みの統計も変わる**（`ActivityImportTest`）。権限・通信は増えていない。
   0.10.1（DESIGN.md §4.10.1）: Strava の `activities.csv` を目録として読み（`ActivityCatalog`。種目はファイルより優先・名前を記録名に・Virtual Ride は既定で外す）、重複は**活動単位**（`DayPlanner.planAll`: 取り込みの印（Room 版 6 `import_source`）で黙って外す・既存の記録と軌跡を比べて同じ走行は外す・複数の機器の同じ走行は丸ごと 1 つ・別の場所で時間が重なれば同じ日の別の記録・前に取り込んだその日の記録には区間として足す）。確認画面は年・月で畳む。**実際の書き出しは利用者の走行なので git・dist・テストのリソースに入れない**（`ImportSampleTest` はパスがあるときだけ走る。確認のスクリーンショットは `captures/private/`）。
 - edge-to-edge（targetSdk 36 で強制）。各画面は `WindowInsets.safeDrawing` / Scaffold で避ける。画面の向きは固定しない。
-- 権限: FINE/COARSE_LOCATION、FOREGROUND_SERVICE(_LOCATION)、POST_NOTIFICATIONS、INTERNET、ACCESS_NETWORK_STATE、WAKE_LOCK、VIBRATE、
+- 権限: FINE/COARSE_LOCATION、FOREGROUND_SERVICE(_LOCATION)、POST_NOTIFICATIONS、INTERNET（0.12.0〜 参加した人だけランキングのサーバ taisen-game.com にも）、ACCESS_NETWORK_STATE、WAKE_LOCK、VIBRATE、
   （0.2.0〜、どちらも任意で設定画面から案内するだけ）ACCESS_BACKGROUND_LOCATION・REQUEST_IGNORE_BATTERY_OPTIMIZATIONS。
   前面で FGS を始めるので「使用中のみ」で画面オフ・裏でも記録できる。「常に許可」はアプリが落とされたときの自動再開にだけ効く。
   0.3.0〜 CAMERA（走行中の写真。撮影ボタンを初めて押したときに求める。QR の読み取りは Code Scanner なので無関係）、
@@ -86,6 +93,7 @@ app/src/main/java/jp/kjtr/cycleroutelogger/
 ├── stats/    TrackFilter（記録の一覧の絞り込み・並べ替え・場所の判定と索引。0.11.0）・RideAnalysis（記録の詳細の区間（1 km / 5 km）・時速の分布（2 km/h ごと）の純ロジック）・
 │             RideSummary（全記録のまとめ・開拓したマス GridCells。0.7.0）・CellShapes（開拓したマスの地図。0.8.0）・
 │             ElevationGain（獲得標高。精度の悪い高度を除き中央値＋移動平均＋10 m のヒステリシス。0.9.0）
+├── ranking/  オンラインランキング（0.12.0）: RankingRules・RankingSpec（送る値）・RankingApi・RankingStore・RankingSync・RankingCellCache
 ├── update/   UpdateCheck（版の比較・releases.json・間隔・UpdateChecker の純ロジック）・UpdateManager（取得・SharedPreferences `update`）
 ├── guide/    Navigator（案内・目的地・到着/接近/外れの知らせ）・Alerter（音・振動）
 ├── sensor/   LocationHub（LocationManager / Google の融合測位（0.9.0）。acquire/release）・HeadingProvider（ROTATION_VECTOR）
@@ -99,7 +107,7 @@ app/src/main/java/jp/kjtr/cycleroutelogger/
 純ロジックは `app/src/test/` で単体テスト（GPX 解析・往復、距離・獲得標高・速度・自動一時停止・跳び、外れ距離・進捗、
 経由地の並び・次の経由地、方位・方角・画面端の矢印、種類の推定、URL の書き換え・取得した中身の判定・Drive の確認ページ、Migration、記録 → ルート / GPX、
 更新の確認（UpdateCheckTest）、区間の境目の補間・端数・一時停止の除外・分布の bin の境界・合計の一致（RideAnalysisTest、0.5.0）、場所名の検索の解析・URL・1 秒の間隔・キャッシュ（PlaceSearchTest、0.6.0）、
-全記録のまとめの期間・集計・走行の時間帯・2 km/h の bin・開拓したマス（RideSummaryTest / GridCellsTest、0.7.0）、マスの矩形・まとめ・初めて開拓したマス（CellShapesTest、0.8.0）、軌跡のなめらかさ（TrackSmootherTest）・獲得標高（ElevationGainTest）・Migration 3→4（0.9.0）、ファイルからの取り込み（ActivityImportTest: FIT・GPX・TCX・KML・zip・.gz・日付・重複）・Migration 4→5（0.10.0）、活動単位の重複・取り込み済み・既存の記録への追加・activities.csv・Migration 5→6（0.10.1）、バックアップと記録のファイルの判定（FileKindTest）・まとめの地図のタイルの計算（MapTilesTest、0.10.2）、記録の絞り込み（期間の境界・タイムゾーン・夏時間・範囲・種類・名前・並べ替え・場所の円 / 矩形・総当たりとの一致・索引の保存と作り直し・条件の JSON。TrackFilterTest）・Migration 6→7（0.11.0）。
+全記録のまとめの期間・集計・走行の時間帯・2 km/h の bin・開拓したマス（RideSummaryTest / GridCellsTest、0.7.0）、マスの矩形・まとめ・初めて開拓したマス（CellShapesTest、0.8.0）、軌跡のなめらかさ（TrackSmootherTest）・獲得標高（ElevationGainTest）・Migration 3→4（0.9.0）、ファイルからの取り込み（ActivityImportTest: FIT・GPX・TCX・KML・zip・.gz・日付・重複）・Migration 4→5（0.10.0）、活動単位の重複・取り込み済み・既存の記録への追加・activities.csv・Migration 5→6（0.10.1）、バックアップと記録のファイルの判定（FileKindTest）・まとめの地図のタイルの計算（MapTilesTest、0.10.2）、記録の絞り込み（期間の境界・タイムゾーン・夏時間・範囲・種類・名前・並べ替え・場所の円 / 矩形・総当たりとの一致・索引の保存と作り直し・条件の JSON。TrackFilterTest）・Migration 6→7（0.11.0）、オンラインランキングの名前の検査・日本時間の月・送る本文のキー・値（まとめと一致・今月初めてのマス・上限）・マスの覚え・バックアップ（RankingTest、0.12.0。計 262 件）。
 実際の書き出しで通す `ImportSampleTest` は zip（環境変数 `CRL_IMPORT_SAMPLE`）が無ければスキップ）。
 ネットワークを使うテストは置かない。
 
@@ -137,6 +145,7 @@ cd d:\work\android\cycle_route_logger
 
 ## 未実装・既知の制約
 
+- Maps キー: 2026-11-07 の確認で、新しい AVD の **debug** ビルドは「Authorization failure」（`E8:23:…:2F:CF;jp.kjtr.cycleroutelogger` が制限に無い様子）で地図が灰色。release は表示される。ドライブロガーの debug は表示される。
 - 地図のサムネイル（記録一覧）は無し。速度の色分けは記録の詳細だけ。SNS 用の画像に区間・速度の分布は入らない。
 - 区間・分布は記録の点から毎回計算する（Room に持たない）。バックアップから戻した記録は点の精度・端末の速度が無いので、
   一覧の統計（manifest の値）と区間の合計が少しずれることがある（0.9.0 からは設定の切り替え・上書きの最初の起動で点から計算し直すので、その後はそろう。

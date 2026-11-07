@@ -4,4 +4,6 @@
     <exclude domain="database" path="." />
     <!-- 記録の一覧の絞り込みの条件（場所の範囲の中心を含む。0.11.0） -->
     <exclude domain="sharedpref" path="track_filter.xml" />
+    <!-- オンラインランキングの参加の情報（ID・合言葉。機種変更は設定のバックアップか端末間の移行で引き継ぐ） -->
+    <exclude domain="sharedpref" path="ranking.xml" />
 </full-backup-content>

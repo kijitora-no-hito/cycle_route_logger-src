@@ -3,6 +3,7 @@ package jp.kjtr.cycleroutelogger.data
 import android.util.Xml
 import jp.kjtr.cycleroutelogger.gpx.GpxParser
 import jp.kjtr.cycleroutelogger.gpx.GpxWriter
+import jp.kjtr.cycleroutelogger.ranking.RankingBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -21,6 +22,8 @@ data class BackupManifest(
     val exportedAt: Long,
     val plans: List<PlanMeta>,
     val tracks: List<TrackMeta>,
+    /** オンラインランキングの参加（playerId・secret・名前。0.12.0〜、参加していなければ無し）。読み込むと同じ参加者として続く。 */
+    val ranking: RankingBackup? = null,
 )
 
 @Serializable
@@ -70,9 +73,10 @@ data class TrackMeta(
 class Backup(private val db: AppDatabase, private val plans: PlanRepository, private val tracks: TrackRepository) {
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
 
-    data class Counts(val plans: Int, val tracks: Int)
+    data class Counts(val plans: Int, val tracks: Int, val ranking: RankingBackup? = null)
 
-    suspend fun export(out: OutputStream): Counts = withContext(Dispatchers.IO) {
+    /** [ranking] = ランキングの参加の情報（参加していなければ null。ranking_server/docs/API.md §2）。 */
+    suspend fun export(out: OutputStream, ranking: RankingBackup? = null): Counts = withContext(Dispatchers.IO) {
         val planList = plans.allPlans()
         val trackList = tracks.allFinished()
         val planMetas = ArrayList<PlanMeta>()
@@ -107,7 +111,7 @@ class Backup(private val db: AppDatabase, private val plans: PlanRepository, pri
                 )
             }
             zip.putNextEntry(ZipEntry(MANIFEST))
-            w.write(json.encodeToString(BackupManifest.serializer(), BackupManifest(exportedAt = System.currentTimeMillis(), plans = planMetas, tracks = trackMetas)))
+            w.write(json.encodeToString(BackupManifest.serializer(), BackupManifest(exportedAt = System.currentTimeMillis(), plans = planMetas, tracks = trackMetas, ranking = ranking)))
             w.flush()
             zip.closeEntry()
         }
@@ -160,7 +164,7 @@ class Backup(private val db: AppDatabase, private val plans: PlanRepository, pri
                 pts.chunked(5_000).forEach { db.tracks().insertPoints(it) }
                 trackCount++
             }
-            Counts(planCount, trackCount)
+            Counts(planCount, trackCount, manifest.ranking)
         }
     }
 

@@ -41,6 +41,7 @@ import jp.kjtr.cycleroutelogger.R
 import jp.kjtr.cycleroutelogger.data.MapKind
 import jp.kjtr.cycleroutelogger.data.Positioning
 import jp.kjtr.cycleroutelogger.data.SettingsStore
+import jp.kjtr.cycleroutelogger.ranking.RankingSpec
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -152,6 +153,16 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onOpenImport: () -> Un
                 OutlinedButton(onClick = { importZip.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }, enabled = !restoring) { Text(stringResource(R.string.backup_import)) }
             }
             if (restoring) Text(stringResource(R.string.backup_checking), style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider()
+
+            // オンラインランキング（0.12.0。既定 OFF。ranking_server/docs/API.md）
+            RankingSettingsSection(
+                sync = vm.ranking,
+                sentValues = RankingSpec.SENT_VALUES,
+                notSent = RankingSpec.NOT_SENT,
+                debug = BuildConfig.DEBUG,
+                onMessage = { vm.sayText(it) },
+            )
             HorizontalDivider()
 
             Section(stringResource(R.string.set_update))

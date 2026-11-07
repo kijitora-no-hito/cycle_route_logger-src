@@ -19,11 +19,17 @@ import jp.kjtr.cycleroutelogger.guide.Navigator
 import jp.kjtr.cycleroutelogger.photo.PhotoRepository
 import jp.kjtr.cycleroutelogger.record.RecorderStatus
 import jp.kjtr.cycleroutelogger.record.RecordingSession
+import jp.kjtr.cycleroutelogger.ranking.RankValues
+import jp.kjtr.cycleroutelogger.ranking.RankingCellCache
+import jp.kjtr.cycleroutelogger.ranking.RankingSpec
+import jp.kjtr.cycleroutelogger.ranking.RankingSync
+import jp.kjtr.cycleroutelogger.stats.RideFacts
 import jp.kjtr.cycleroutelogger.sensor.LocationHub
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import jp.kjtr.cycleroutelogger.update.UpdateManager
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -64,6 +70,40 @@ class CycleApp : Application() {
         NominatimSearch(userAgent = NominatimSearch.userAgent(BuildConfig.VERSION_NAME), online = ::isOnline)
     }
 
+    /** オンラインランキング（0.12.0。参加は設定で ON にした人だけ・既定 OFF。docs/DESIGN.md §4.12）。 */
+    val ranking: RankingSync by lazy {
+        RankingSync(
+            context = this,
+            scope = appScope,
+            appId = RankingSpec.APP_ID,
+            appVersion = BuildConfig.VERSION_NAME,
+            userAgent = "CycleRouteLogger/${BuildConfig.VERSION_NAME} (Android; $packageName)",
+            releaseBaseUrl = BuildConfig.RANKING_BASE,
+            debug = BuildConfig.DEBUG,
+            snapshot = { rankingSnapshot() },
+            // 記録中・取り込み中は送らない（終わってから。watch の Flow が流れる）
+            hold = { rankingHold() },
+        )
+    }
+    private val rankingCells by lazy { RankingCellCache(java.io.File(noBackupFilesDir, "ranking_cells.bin")) }
+
+    private fun rankingHold(): Boolean =
+        session.isActive || recorder.serviceRunning.value || activityImport.state.value is ActivityImporter.State.Importing
+
+    /** ランキングに送る値（終えた記録すべて。まとめの「すべての記録」と同じ距離・マス）。 */
+    private suspend fun rankingSnapshot(): RankValues {
+        val list = tracks.allFinished()
+        val byId = list.associateBy { it.id }
+        val cells = rankingCells.cells(list.map { it.id to SummaryRepository.cellKey(it) }) { id -> summaries.cellsOf(byId.getValue(id)) }
+        val rides = list.map { t ->
+            RideFacts(
+                id = t.id, name = "", startedAt = t.startedAt, endedAt = t.endedAt ?: t.startedAt,
+                distanceM = t.distanceM, movingMs = t.movingMs, maxSpeedMps = t.maxSpeedMps, cells = cells[t.id].orEmpty(),
+            )
+        }
+        return RankingSpec.compute(rides, System.currentTimeMillis())
+    }
+
     /** ネットにつながっていそうか（つながっていなければ検索を送らずに「オフライン」と出す）。 */
     fun isOnline(): Boolean = runCatching {
         val cm = getSystemService(ConnectivityManager::class.java) ?: return true
@@ -102,6 +142,16 @@ class CycleApp : Application() {
             kotlinx.coroutines.delay(1_500)
             geoIndex.start()
         }
+        // オンラインランキング（0.12.0）: 終えた記録が変わったら（保存・削除・取り込み・計算し直し）30 秒まとめて送る（参加しているときだけ）。
+        // 記録中・取り込み中は送らず、終わったときにもう一度流れるよう記録の状態も一緒に見る
+        ranking.watch(
+            combine(
+                tracks.finished().map { l -> l.map { listOf(it.id, it.pointCount, it.distanceM, it.startedAt) } }.distinctUntilChanged(),
+                session.state.map { it != null }.distinctUntilChanged(),
+                recorder.serviceRunning,
+                activityImport.state.map { it is ActivityImporter.State.Importing }.distinctUntilChanged(),
+            ) { a, b, c, d -> listOf(a, b, c, d) }.distinctUntilChanged(),
+        )
         // 更新の確認の ON/OFF を帯・設定の表示に反映（OFF なら帯を消す）
         appScope.launch {
             settings.settings.map { it.updateCheck }.distinctUntilChanged().collect { updates.publish() }

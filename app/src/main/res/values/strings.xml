@@ -271,6 +271,8 @@
     <string name="msg_export_failed">書き出せませんでした。</string>
     <string name="msg_added_to_plan">プランにルートとして追加しました。</string>
     <string name="msg_backup_done">プラン %1$d 件・記録 %2$d 件を書き出しました。</string>
+    <string name="msg_ranking_restored">ランキングの参加（名前: %1$s）も引き継ぎました</string>
+    <string name="ranking_title">ランキング</string>
     <string name="msg_restore_done">プラン %1$d 件・記録 %2$d 件を読み込みました（今あるデータに追加）。</string>
     <string name="msg_restore_failed">バックアップを読み込めませんでした。</string>
     <string name="err_not_gpx">%1$s は GPX ではありません。</string>
@@ -295,7 +297,7 @@
     <string name="set_auto_next">次の経由地を自動で目的地にする</string>
     <string name="set_auto_next_desc">ルートサイクリングで、ルート沿いの次の経由地を目的地として表示します</string>
     <string name="set_data">データ</string>
-    <string name="set_backup_desc">全プラン・全記録を ZIP（中身は GPX と manifest.json）に書き出します。読み込みは今あるデータに追加します。</string>
+    <string name="set_backup_desc">全プラン・全記録を ZIP（中身は GPX と manifest.json）に書き出します（オンラインランキングに参加していれば、その参加の情報も）。読み込みは今あるデータに追加します。</string>
     <string name="set_backup_desc_import">Strava などの記録（GPX・FIT・書き出しの zip）は、記録の一覧の右上の［ファイルから記録を取り込む］から読めます。</string>
     <string name="backup_checking">ファイルを確かめています…</string>
     <string name="backup_notice_activity_title">バックアップではありません</string>
@@ -310,7 +312,7 @@
     <string name="backup_export">バックアップを書き出す</string>
     <string name="backup_import">バックアップを読み込む</string>
     <string name="set_about">このアプリについて</string>
-    <string name="about_text">自転車ルートロガー %1$s\n地図: Google マップ（Google の利用規約・プライバシーポリシーが適用されます）。\n位置・ルート・記録は端末の中だけに保存し、送信しません。URL・QR コードから GPX を読み込むときは、指定した URL にだけアクセスします。QR コードの読み取りは Google Play 開発者サービスの Code Scanner を使います。測位の方式で「Google の融合測位」を選んだときは、位置の計算に Google Play 開発者サービスを使います（既定は端末の GPS）。写真は端末のフォトライブラリに保存し、SNS 用の画像は利用者が共有したときだけ外に出ます。更新の確認のため GitHub（raw.githubusercontent.com）から公開の版一覧を取得します（送るのは通常の通信の情報だけ。設定の「更新の確認」で OFF にできます）。場所名の検索は、検索ボタンを押したときだけ検索語を Nominatim（OpenStreetMap Foundation）に送ります（結果は保存しません）。\n場所検索: Nominatim / © OpenStreetMap contributors（データは ODbL）。\n問い合わせは GitHub の Issues へ。</string>
+    <string name="about_text">自転車ルートロガー %1$s\n地図: Google マップ（Google の利用規約・プライバシーポリシーが適用されます）。\n位置・ルート・記録は端末の中だけに保存し、送信しません。URL・QR コードから GPX を読み込むときは、指定した URL にだけアクセスします。QR コードの読み取りは Google Play 開発者サービスの Code Scanner を使います。測位の方式で「Google の融合測位」を選んだときは、位置の計算に Google Play 開発者サービスを使います（既定は端末の GPS）。写真は端末のフォトライブラリに保存し、SNS 用の画像は利用者が共有したときだけ外に出ます。更新の確認のため GitHub（raw.githubusercontent.com）から公開の版一覧を取得します（送るのは通常の通信の情報だけ。設定の「更新の確認」で OFF にできます）。オンラインランキング（設定で参加した人だけ・既定はオフ）は、ランキングのサーバ（taisen-game.com）に名前・ランダムな ID・走行距離と開拓したマスの数（累計と今月の分）・アプリの版・端末の種類だけを送ります（位置・経路・マスの場所は送りません。参加をやめるとサーバの記録は消えます）。場所名の検索は、検索ボタンを押したときだけ検索語を Nominatim（OpenStreetMap Foundation）に送ります（結果は保存しません）。\n場所検索: Nominatim / © OpenStreetMap contributors（データは ODbL）。\n問い合わせは GitHub の Issues へ。</string>
 
     <!-- 更新の確認（0.4.0。DESIGN.md §10） -->
     <string name="set_update">更新</string>

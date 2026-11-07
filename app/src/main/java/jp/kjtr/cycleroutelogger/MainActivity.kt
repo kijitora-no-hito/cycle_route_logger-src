@@ -25,6 +25,12 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleIntent(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        // ランキング: 送り残し・消し残し・前回から 1 時間以上たった分を送る（参加していなければ消し残しだけ。記録中は送らない）
+        (application as CycleApp).ranking.onAppOpen()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)

@@ -17,7 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Settings
@@ -53,6 +55,8 @@ fun HomeScreen(
     onPlans: () -> Unit,
     onTracks: () -> Unit,
     onSettings: () -> Unit,
+    onSummary: () -> Unit,
+    onRanking: () -> Unit,
 ) {
     val rec by vm.session.state.collectAsStateWithLifecycle()
     val ride by vm.ride.collectAsStateWithLifecycle()
@@ -112,6 +116,11 @@ fun HomeScreen(
                 NavButton(Icons.Filled.Route, stringResource(R.string.plans_title), onPlans, Modifier.weight(1f))
                 NavButton(Icons.Filled.History, stringResource(R.string.tracks_title), onTracks, Modifier.weight(1f))
                 NavButton(Icons.Filled.Settings, stringResource(R.string.settings_title), onSettings, Modifier.weight(1f))
+            }
+            // 0.12.0〜 まとめとオンラインランキング
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NavButton(Icons.Filled.BarChart, stringResource(R.string.summary_title), onSummary, Modifier.weight(1f))
+                NavButton(Icons.Filled.Leaderboard, stringResource(R.string.ranking_title), onRanking, Modifier.weight(1f))
             }
             Text(stringResource(R.string.home_safety_line), style = MaterialTheme.typography.bodySmall)
         }

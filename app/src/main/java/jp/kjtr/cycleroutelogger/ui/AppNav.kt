@@ -36,6 +36,10 @@ fun AppNav(vm: MainViewModel) {
     LaunchedEffect(Unit) {
         vm.messages.collect { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
     }
+    // オンラインランキングの知らせ（参加できなくなった など）
+    LaunchedEffect(Unit) {
+        vm.ranking.messages.collect { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
+    }
     LaunchedEffect(Unit) {
         vm.navRequests.collect { route -> nav.navigate(route) { launchSingleTop = true } }
     }
@@ -50,7 +54,13 @@ fun AppNav(vm: MainViewModel) {
                 onPlans = { nav.navigate("plans?pick=false") },
                 onTracks = { nav.navigate("tracks") },
                 onSettings = { nav.navigate("settings") },
+                onSummary = { nav.navigate("summary") },
+                onRanking = { nav.navigate("ranking") { launchSingleTop = true } },
             )
+        }
+        // オンラインランキング（0.12.0。ホーム・まとめから）
+        composable("ranking") {
+            RankingScreen(vm, onBack = { nav.popBackStack() }, onSettings = { nav.navigate("settings") { launchSingleTop = true } })
         }
         composable("ride") {
             RideScreen(vm, onBack = { if (!nav.popBackStack("home", false)) nav.navigate("home") }, onCamera = { nav.navigate("camera") }, onShareCard = { nav.navigate("card/$it") })
@@ -102,7 +112,10 @@ fun AppNav(vm: MainViewModel) {
             "summary?filtered={filtered}",
             arguments = listOf(navArgument("filtered") { type = NavType.BoolType; defaultValue = false }),
         ) { entry ->
-            SummaryScreen(vm, filtered = entry.arguments?.getBoolean("filtered") ?: false, onBack = { nav.popBackStack() }, onOpenTrack = { nav.navigate("track/$it") })
+            SummaryScreen(
+                vm, filtered = entry.arguments?.getBoolean("filtered") ?: false, onBack = { nav.popBackStack() }, onOpenTrack = { nav.navigate("track/$it") },
+                onRanking = { nav.navigate("ranking") { launchSingleTop = true } },
+            )
         }
         composable(
             "track/{id}?finished={finished}",

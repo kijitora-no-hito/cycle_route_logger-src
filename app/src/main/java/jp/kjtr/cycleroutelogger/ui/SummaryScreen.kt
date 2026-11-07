@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.ZoomOutMap
@@ -118,7 +119,7 @@ private const val TAP_TOLERANCE_DP = 14.0
 /** 全記録のまとめ（統計・全走行の地図・グラフ）。drive_logger の「まとめ」と同じ作り（DESIGN.md §4.7）。 */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun SummaryScreen(vm: MainViewModel, onBack: () -> Unit, onOpenTrack: (Long) -> Unit, filtered: Boolean = false) {
+fun SummaryScreen(vm: MainViewModel, onBack: () -> Unit, onOpenTrack: (Long) -> Unit, filtered: Boolean = false, onRanking: () -> Unit = {}) {
     // 0.11.0〜 一覧で絞り込んだ記録のまとめ（［この条件でまとめを見る］）。期間・フリー/ルートは一覧の条件で選ぶので、この画面の切り替えは出さない
     var useFilter by rememberSaveable { mutableStateOf(filtered) }
     val allTracksOrNull by remember { vm.tracks.finished() }.collectAsState(null)
@@ -228,6 +229,13 @@ fun SummaryScreen(vm: MainViewModel, onBack: () -> Unit, onOpenTrack: (Long) -> 
                 TopAppBar(
                     title = { Text(stringResource(R.string.summary_title)) },
                     navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)) } },
+                    // 0.12.0〜 オンラインランキングへ
+                    actions = {
+                        TextButton(onClick = onRanking) {
+                            Icon(Icons.Filled.Leaderboard, contentDescription = null)
+                            Text(" " + stringResource(R.string.ranking_title))
+                        }
+                    },
                 )
             },
         ) { pad ->

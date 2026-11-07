@@ -10,10 +10,10 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 配布ファイル | `dist/cycleroutelogger-0.11.0-release.apk`（前版 0.1.0〜0.10.2 も dist に残す）。**実キー入りでビルドすること**（下の「ビルド」） |
+| 配布ファイル | `dist/cycleroutelogger-0.12.0-release.apk`（前版 0.1.0〜0.11.0 も dist に残す）。**実キー入りでビルドすること**（下の「ビルド」） |
 | アプリ名 | 自転車ルートロガー |
 | アプリ ID | `jp.kjtr.cycleroutelogger`（namespace も同じ。公開後は変更不可） |
-| バージョン | 0.11.0（versionCode 16、2026-10-17）。0.1.0〜0.10.2 から上書き更新でデータは残る（Room Migration 1→2→3→4→5→6→7。6→7 は 0.11.0 で場所の索引の表を足しただけで、既存の記録の索引は上書き後の最初の起動でバックグラウンドで作る） |
+| バージョン | 0.12.0（versionCode 17、2026-11-07。Room は版 7 のまま）。0.11.0 は versionCode 16。0.1.0〜0.11.0 から上書き更新でデータは残る（Room Migration 1→2→3→4→5→6→7。6→7 は 0.11.0 で場所の索引の表を足しただけで、既存の記録の索引は上書き後の最初の起動でバックグラウンドで作る） |
 | 対応 Android | 7.0（minSdk 24）以上 / targetSdk 36 |
 | アイコン | `play-icon-512.png`（512×512・全面ベタ。`tools/StoreImages.java` で再生成） |
 | プライバシーポリシー | `privacy-policy.html`（問い合わせは GitHub の Issues。個人メールは載せない） |
@@ -26,7 +26,7 @@ cd <このリポジトリのフォルダ>
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat test assembleRelease
 New-Item -ItemType Directory -Force dist | Out-Null
-Copy-Item app\build\outputs\apk\release\app-release.apk dist\cycleroutelogger-0.11.0-release.apk -Force
+Copy-Item app\build\outputs\apk\release\app-release.apk dist\cycleroutelogger-0.12.0-release.apk -Force
 
 # 署名の確認（証明書の SHA-256 が下の「鍵の管理」の値であること）
 & "$env:JAVA_HOME\bin\java.exe" -jar "$env:LOCALAPPDATA\Android\Sdk\build-tools\37.0.0\lib\apksigner.jar" verify --print-certs dist\cycleroutelogger-0.11.0-release.apk
@@ -78,13 +78,35 @@ Maps キーの Android 制限も release の SHA-1 に紐付くので、鍵を�
   フォアグラウンドサービス（記録中は通知）、通知、インターネット（地図・利用者が指定した URL からの GPX 取得）、WAKE_LOCK・振動。
   任意: 位置の「常に許可」（記録中にアプリが落とされたときの自動再開だけに使う）、電池の最適化から外す確認。
   カメラ（0.3.0〜。走行中の写真。撮影ボタンを初めて押したとき）、ストレージの書き込み（Android 9 以下だけ。写真をライブラリに保存）。
-- **通信先**: Google マップ、利用者が指定した URL（QR コードで読んだものを含む）、更新の確認の GitHub（raw.githubusercontent.com、0.4.0〜。設定で OFF にできる）、場所名の検索の Nominatim（nominatim.openstreetmap.org、0.6.0〜。検索ボタンを押したときだけ）だけ。
+- **通信先**: Google マップ、利用者が指定した URL（QR コードで読んだものを含む）、更新の確認の GitHub（raw.githubusercontent.com、0.4.0〜。設定で OFF にできる）、場所名の検索の Nominatim（nominatim.openstreetmap.org、0.6.0〜。検索ボタンを押したときだけ）、オンラインランキングのサーバ（taisen-game.com、0.12.0〜。設定で参加した人だけ・既定 OFF）だけ。
   QR の読み取りは Google Play 開発者サービスの Code Scanner（初回に読み取り機能をダウンロードすることがある）。記録・プランは送らない（書き出し・共有は利用者の操作だけ）。
   0.9.0〜 設定「測位の方式」で「Google の融合測位」を選んだときは、位置の計算に Google Play 開発者サービスを使う（既定は端末の GPS。Play 開発者サービスが端末の設定に応じて情報の一部を Google に送ることがある）。
 - **Play に出すなら**: ACCESS_BACKGROUND_LOCATION は位置情報の権限の申告（動画つき）と審査が要る。REQUEST_IGNORE_BATTERY_OPTIMIZATIONS は
   Play では許可される用途が限られる（使うなら申告、だめなら設定画面を開くだけにする）。どちらも外しても記録はできる。
 - **安全**: 走行中に操作・注視しない。ホルダーに固定。GPS は目安。
 - **自動更新なし**（APK 直接配布）。0.4.0〜 は新しい版が出たらホームの帯で知らせる（ダウンロードはブラウザ）。更新は同じ鍵で versionCode を上げる。アンインストールすると記録は消える（先にバックアップ）。
+
+## 0.12.0 の変更（2026-11-07）
+
+- **オンラインランキング**（`docs/DESIGN.md` §4.12。正本は `d:\work\android\ranking_server\docs\API.md`）: 設定「オンラインランキングに参加する」（**既定 OFF**）。
+  参加した人どうしで「走行距離」「開拓したマス」の順位（総合・今月＝日本時間）。参加者 10 人未満は自分の順位だけ、10 人以上で上位 100 人。入口はホームの［ランキング］とまとめの右上。
+  送るのは名前・ランダムな ID・数値・版・端末の種類だけ（位置・経路・マスの場所は送らない）。記録中・取り込み中は送らない。参加をやめるとサーバの記録は消える。
+  ホームに［まとめ］［ランキング］の入口を足した。バックアップに参加の情報（ID・合言葉・名前）を入れる。
+- **通信先が増える**（taisen-game.com。参加した人だけ）。権限は変わらない（INTERNET は前から）。**プライバシーポリシーを更新**（`privacy-policy.html`: オンラインランキングの節・権限の表・改定日 2026-11-07）。
+  **android-apps の公開版のポリシー・説明ページも合わせて直すこと**。掲載文の「通信先」にもランキングを足す（上の「掲載文で触れておくこと」は更新済み）。
+- **サーバ（ranking_server）を本番に置いてから公開する**こと（置く前に出すと、参加した人は「つながりません」・送信待ちのまま。動作は止まらない）。
+- releases.json の notes の文案（`- ` の行が［更新内容］に出る。先頭 6 行まで）:
+
+  ```
+  - オンラインランキングを追加しました（設定で参加した人だけ・はじめはオフ）
+  - 参加した人どうしで「走行距離」「開拓したマス」の順位（総合・今月）を見られます（ホームの［ランキング］・まとめの右上から）
+  - 参加者が 10 人になるまでは自分の順位だけ、10 人以上で上位 100 人の一覧が見られます
+  - 送るのは名前・ランダムな ID・数値だけで、位置・経路・マスの場所は送りません。参加をやめるとサーバの記録は消えます
+  - ホームに［まとめ］の入口を足しました
+  ```
+
+- 説明ページ用のスクリーンショット候補: `captures/rank/08-unlocked-cells-month.png`（開拓したマス・今月・10 人以上の一覧と自分の行）、`captures/rank/06-locked.png`（10 人未満の画面）。
+  エミュレータ・架空のプレイヤー（seed）なので名前・数字は実在しない。ステータスバーは demo モードではない。
 
 ## 0.11.0 の変更（2026-10-17）
 

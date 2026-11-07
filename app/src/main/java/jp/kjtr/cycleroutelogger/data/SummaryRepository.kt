@@ -69,8 +69,7 @@ class SummaryRepository(private val db: AppDatabase) {
         // 記録の詳細と同じく、保存した点を RideTracker に流し直す（跳びの除去 100 km/h・自動一時停止の扱いが記録と同じ）
         val steps = if (pts.isNotEmpty()) TrackRepository.analyze(pts, t.autoPause, smooth).steps else emptyList()
         val (binsMs, binsM) = RideSummaries.speedBins(steps)
-        val cells = HashSet<Long>()
-        for (s in segs) GridCells.cellsOf(s.map { it.lat to it.lon }, cells)
+        val cells = cellsOfSegments(segs)
         val lineSegs = segs.map { s -> s.map { LatLon(it.lat, it.lon) } }.filter { it.size >= 2 }
         val facts = RideFacts(
             id = t.id, name = t.name, startedAt = t.startedAt, endedAt = t.endedAt ?: pts.lastOrNull()?.time ?: t.startedAt,
@@ -87,7 +86,28 @@ class SummaryRepository(private val db: AppDatabase) {
         return RideDigest(facts, lines)
     }
 
+    /**
+     * 記録 1 本の開拓したマス（まとめと同じ数え方。オンラインランキングの「開拓したマス」に使う。0.12.0）。
+     * 線・マスはなめらかにした点（設定が ON のとき）を一時停止・跳びの区間ごとに。
+     */
+    suspend fun cellsOf(t: TrackEntity): Set<Long> {
+        val pts = withContext(Dispatchers.IO) { db.tracks().points(t.id) }
+        return cellsOfSegments(TrackRepository.segmentsOf(TrackRepository.smoothed(pts, TrackRepository.smoothConfig())))
+    }
+
     companion object {
         const val PARALLEL = 3
+
+        /** マスの数え方を変えたら上げる（ランキングのマスの覚え [cellKey] を作り直させる）。 */
+        private const val CELLS_VERSION = 1
+
+        private fun cellsOfSegments(segs: List<List<TrackPointEntity>>): HashSet<Long> {
+            val cells = HashSet<Long>()
+            for (s in segs) GridCells.cellsOf(s.map { it.lat to it.lon }, cells)
+            return cells
+        }
+
+        /** [cellsOf] の結果が変わりうるものの鍵（点の数・距離（計算し直すと変わる）・なめらかにするか・数え方の版）。 */
+        fun cellKey(t: TrackEntity): String = "$CELLS_VERSION|${t.pointCount}|${t.distanceM}|${TrackRepository.smoothingEnabled}"
     }
 }

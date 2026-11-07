@@ -115,6 +115,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _messages.trySend(str(id, *args))
     }
 
+    /** 画面の下に知らせを出す（文字列そのまま。ランキングの設定から）。 */
+    fun sayText(text: String) {
+        _messages.trySend(text)
+    }
+
+    /** オンラインランキング（0.12.0。参加・送信・読み込み）。 */
+    val ranking get() = app.ranking
+
     init {
         viewModelScope.launch {
             if (!session.isActive) _unfinished.value = tracks.unfinished()
@@ -639,7 +647,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun exportBackup(uri: Uri) = viewModelScope.launch {
         val r = withContext(Dispatchers.IO) {
-            runCatching { app.contentResolver.openOutputStream(uri, "wt")?.use { app.backup.export(it) } }.getOrNull()
+            runCatching { app.contentResolver.openOutputStream(uri, "wt")?.use { app.backup.export(it, app.ranking.backup()) } }.getOrNull()
         }
         if (r != null) say(R.string.msg_backup_done, r.plans, r.tracks) else say(R.string.msg_export_failed)
     }
@@ -694,6 +702,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             if (r != null) {
                 say(R.string.msg_restore_done, r.plans, r.tracks)
+                // ランキングの参加も引き継ぐ（バックアップに入っていれば。記録が増えたので値は 30 秒まとめて送られる）
+                if (app.ranking.restore(r.ranking)) say(R.string.msg_ranking_restored, app.ranking.state.value.name)
             } else {
                 // manifest が無い大きな zip など: コピーした一時ファイルを最後まで見て、取り込みで読めるなら案内する
                 val kind = withContext(Dispatchers.IO) {

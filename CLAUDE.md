@@ -7,7 +7,7 @@
 
 - アプリ名: 自転車ルートロガー
 - applicationId / namespace / パッケージ: `jp.kjtr.cycleroutelogger`（applicationId は公開後に変えられない）
-- minSdk 24 / targetSdk 36 / compileSdk 36、versionCode 17 / versionName "0.12.0"（0.12.0 = 2026-11-07 オンラインランキング・未公開。0.1.0 は 2026-10-11 作成・GitHub 公開済み。利用者の端末に実データあり。
+- minSdk 24 / targetSdk 36 / compileSdk 36、versionCode 18 / versionName "0.12.1"（0.12.1 = 2026-11-07・未公開: ランキングで参加者が 10 人になるまで（サーバの `unlocked` が false）は人数を出さない（「あなたは ○ 位」・「参加者が 10 人になると、上位の一覧が見られます」。10 人以上は「（○ 人中）」も）。文言は `RankingRules.myRankText` / `lockedText`、テスト `RankingTest.rankTextHidesPlayerCountUntilUnlocked`。 0.12.0 = 2026-11-07 オンラインランキング・未公開。0.1.0 は 2026-10-11 作成・GitHub 公開済み。利用者の端末に実データあり。
   0.7.0 まで公開済み。0.8.0（2026-10-13、開拓したマスの地図・PhotoLocator の修正）・0.9.0（2026-10-15、測位の方式・軌跡のなめらかさ・獲得標高）・
   0.10.0（2026-10-16、ファイルから記録を取り込む）・0.10.1（2026-10-16、Strava の書き出し・activities.csv・活動単位の重複）・0.10.2（2026-10-17、まとめの地図をタイルに・バックアップと取り込みの取り違えの案内）・0.11.0（2026-10-17、記録の一覧の絞り込み・並べ替え）は dist にある）
 - **記録の詳細**（0.5.0、DESIGN.md §4.5）: 地図はルートプランと同じ作り（`Settings.trackMapRatio`、全画面＋シート）。区間・分布は

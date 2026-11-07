@@ -26,8 +26,8 @@ android {
         applicationId = "jp.kjtr.cycleroutelogger"
         minSdk = 24
         targetSdk = 36
-        versionCode = 17
-        versionName = "0.12.0"
+        versionCode = 18
+        versionName = "0.12.1"
         // オンラインランキングの接続先（ranking_server/docs/API.md §0）。release はこの定数だけ。debug だけ設定で変えられる
         buildConfigField("String", "RANKING_BASE", "\"https://taisen-game.com/rank/api/v1\"")
         vectorDrawables { useSupportLibrary = true }
